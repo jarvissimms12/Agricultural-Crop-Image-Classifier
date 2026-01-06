@@ -1,5 +1,5 @@
 # 1. Clone your repository (Replace with your actual GitHub URL)
-git clone https://github.com/YourUsername/Your-Repo-Name.git
+git clone https://github.com/jarvissimms12/Image-Recognition-Model.git
 cd Your-Repo-Name
 
 # 2. Install the necessary Python libraries
