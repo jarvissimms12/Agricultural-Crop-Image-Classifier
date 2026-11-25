@@ -1,86 +1,70 @@
-🌾 Agricultural Crop Image Classifier
-![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-FF6F00?logo=tensorflow)
-![Accuracy](https://img.shields.io/badge/Test%20Accuracy-81.9%25-brightgreen)
+# 🌾 Agricultural Crop Image Classifier
+
+![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15+-FF6F00?logo=tensorflow)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-A deep learning image classification system that identifies 30 distinct agricultural crop categories from photographs using Transfer Learning with ResNet50. Achieved 81.90% test accuracy on a challenging multi-class dataset.
----
-🎯 Project Highlights
-Metric	Result
-Test Accuracy	81.90%
-Architecture	ResNet50 (Transfer Learning)
-Classes	30 agricultural crop categories
-Technique	Transfer Learning + Fine-tuning
-Regularization	Dropout to minimize overfitting
-Data Pipeline	ImageDataGenerator with real-time augmentation
----
-🧠 Technical Approach
-Why ResNet50?
-ResNet50's residual connections solve the vanishing gradient problem in deep networks, making it ideal for extracting rich visual features from complex crop imagery — without training from scratch.
-Architecture Design
-```
-Input (224×224×3)
-    → ResNet50 Base (ImageNet weights, frozen)
-    → Global Average Pooling
-    → Dense(256, ReLU)
-    → Dropout(0.5)          ← prevents overfitting
-    → Dense(30, Softmax)    ← 30 crop classes
-```
-Data Pipeline
-ImageDataGenerator — real-time augmentation (rotation, flip, zoom, shear)
-Train/Val/Test split — stratified to maintain class balance
-Normalization — pixel values rescaled to [0, 1]
----
-📊 Results
-```
-Final Test Accuracy:  81.90%
-Final Test Loss:      0.72
 
-Training Accuracy:    ~94%   (after fine-tuning)
-Validation Accuracy:  ~83%
-```
-The gap between training and validation accuracy indicates moderate overfitting, controlled via Dropout regularization and data augmentation. Further improvement could be achieved with additional augmentation or a larger dataset.
----
-🚀 How to Run
+## Summary
+
+| | |
+|---|---|
+| **Question** | Can transfer learning identify 30 crop types from ordinary photos with a small dataset? |
+| **Data** | [Kaggle: Agricultural Crops Image Classification](https://www.kaggle.com/datasets/mdwaquarazam/agricultural-crops-image-classification), 30 classes (cherry, coffee plant, cucumber, lemon, olive tree, rice, soybean, sugarcane, wheat…), split 80/10/10 with a fixed seed |
+| **Method** | ImageNet ResNet50 → global average pooling → Dense(128) → Dropout(0.5) → 30-way softmax. Phase 1 trains the head on a frozen base; phase 2 fine-tunes the last ResNet stage (`conv5`) at a 1e-5 learning rate. Real-time augmentation, early stopping on validation accuracy. |
+| **Result** | An earlier Kaggle run logged **81.9% test accuracy** (training ~96%, validation ~88%; see `Analysis.txt`). With 30 classes, chance is 3.3%. |
+| **Takeaway** | A frozen pretrained backbone gets most of the way on a small dataset. The train/validation gap (~8 points) says more data or stronger augmentation would help more than a bigger model. |
+
+### What changed in this version
+
+The previously committed `main.py` couldn't reproduce the reported accuracy. It had a
+syntax error (an unclosed parenthesis), never built a test set, never evaluated, trained
+without validation data, and used a different head than the README described. The 81.9%
+figure comes from the earlier Kaggle notebook run and is labeled that way above.
+
+`main.py` is now a complete, runnable pipeline:
+
+- train / validation / **held-out test** generators (test unshuffled, so predictions align)
+- two-phase training: frozen head, then fine-tuning of `conv5`
+- early stopping that restores the best validation weights
+- **one** evaluation on the test split, written to `results/metrics.json` with top-1 and top-3 accuracy, plus a per-class precision/recall report and training curves
+
+The pipeline was verified end to end on a small synthetic image set. Rerunning it on the
+Kaggle data (GPU recommended) will regenerate `results/` and replace the earlier figure
+with reproducible numbers.
+
+## How to run
+
 ```bash
-# 1. Clone the repo
-git clone https://github.com/jarvissimms12/Agricultural-Crop-Image-Classifier.git
-cd Agricultural-Crop-Image-Classifier
-
-# 2. Install dependencies
-pip install tensorflow keras split-folders opencv-python numpy matplotlib
-
-# 3. Download the dataset from Kaggle
-# Dataset: https://www.kaggle.com/datasets/mdwaquarazam/agricultural-crops-image-classification
+pip install -r requirements.txt
 kaggle datasets download -d mdwaquarazam/agricultural-crops-image-classification
 unzip agricultural-crops-image-classification.zip -d Agricultural-crops
-
-# 4. Train the model
-python main.py
+python main.py --epochs-head 15 --epochs-finetune 10
 ```
----
-📁 Project Structure
+
+Outputs: `results/metrics.json`, `results/per_class_report.txt`,
+`results/training_curves.png`, `results/CropModel.keras`.
+
+## Project structure
+
 ```
 Agricultural-Crop-Image-Classifier/
-├── main.py             # Full pipeline: data prep → model build → train → evaluate
-├── requirements.txt    # Python dependencies
-├── Analysis.txt        # Detailed run logs and evaluation notes
+├── main.py           # split → train head → fine-tune → evaluate on test → save
+├── requirements.txt
+├── Analysis.txt      # notes and figures from the earlier Kaggle run
 └── README.md
 ```
+
+## Skills demonstrated
+
+Transfer learning and fine-tuning (ResNet50) · data augmentation · train/validation/test
+discipline · per-class evaluation · reproducible CLI pipelines.
+
+## Related projects
+
+- [state-of-nyc](https://github.com/jarvissimms12/state-of-nyc): housing, schools and city jobs across NYC's 59 community districts
+- [Credit-Card-Fraud](https://github.com/jarvissimms12/Credit-Card-Fraud): imbalanced classification evaluated on realistic data
+
 ---
-🔑 Key Skills Demonstrated
-Deep Learning — CNN architecture design and training
-Transfer Learning — ResNet50 with custom classification head
-Data Engineering — ImageDataGenerator pipeline with augmentation
-Model Evaluation — accuracy/loss curves, overfitting analysis
-Python — TensorFlow, Keras, NumPy, matplotlib
-Reproducibility — modular `main.py`, documented setup instructions
----
-🔗 Related Projects
-Media Content Analytics Dashboard — Interactive BI dashboard with Streamlit & Plotly
-NYC Housing Data Analysis — Real-world data pipeline with NYC Open Data API
-Credit Card Fraud Detection — Imbalanced classification with SMOTE + Random Forest
----
-👤 Author
-Jarvis Simms | MS Data Science, NYIT 2025 | Brooklyn, NY  
-GitHub • LinkedIn
+
+**Jarvis Simms** | MS Data Science, NYIT 2025 | Brooklyn, NY ·
+[GitHub](https://github.com/jarvissimms12) · [LinkedIn](https://www.linkedin.com/in/jarvis-simms-846062136/)

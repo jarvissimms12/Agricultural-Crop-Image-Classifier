@@ -1,6 +1,6 @@
 tensorflow>=2.15.0
 keras>=3.0
 split-folders
-opencv-python
+scikit-learn
 numpy
 matplotlib
